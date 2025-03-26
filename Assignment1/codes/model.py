@@ -1,7 +1,8 @@
 import torch
 import torch.nn as nn
+import torchvision.models as models
+import torch.nn.functional as F
 import timm
-
 
 class SEBlock(nn.Module):
     def __init__(self, channels, reduction=16):
@@ -66,7 +67,7 @@ class CustomSEResNet(nn.Module):
     # only for resnet50 or resnext50 backbone
     def __init__(self, base_model, num_classes=100, freeze=True):
         super(CustomSEResNet, self).__init__()
-
+        
         # Remove the final fully connected layer
         num_features = base_model.fc.in_features  # Get input features of original fc layer
         base_model.fc = nn.Identity()  # Remove the original classification layer
@@ -117,7 +118,7 @@ class CustomSEResNet(nn.Module):
         for name, param in self.base_model.named_parameters():
             if "layer3" in name:
                 param.requires_grad = True
-
+    
     def unfreeze_layer4(self):
         """Unfreeze layer4 in the base model"""
         for name, param in self.base_model.named_parameters():
@@ -140,7 +141,7 @@ class CustomResNet(nn.Module):
         x = self.base_model(x)  # 先通過 ResNet 主幹
         x = self.head(x)
         return x
-
+    
     def unfreeze_head(self):
         """Freeze the custom head to prevent training."""
         for param in self.head.parameters():
@@ -150,7 +151,7 @@ class CustomResNet(nn.Module):
         """ 凍結 ResNet 的所有層，讓它變成特徵提取器 """
         for param in self.base_model.parameters():
             param.requires_grad = False
-
+    
     def unfreeze_base_model(self):
         """Freeze all layers in the base model"""
         for param in self.base_model.parameters():
@@ -161,11 +162,16 @@ class CustomResNet(nn.Module):
             if "layer3" in name:
                 param.requires_grad = False
 
+    def unfreeze_layer1(self):
+        for name, param in self.base_model.named_parameters():
+            if "layer1" in name:
+                param.requires_grad = True
+
     def unfreeze_layer3(self):
         for name, param in self.base_model.named_parameters():
             if "layer3" in name:
                 param.requires_grad = True
-
+    
     def unfreeze_layer4(self):
         for name, param in self.base_model.named_parameters():
             if "layer4" in name:
@@ -190,19 +196,20 @@ def get_model(model_type, weights_pth=None):
     elif model_type == 'resnext50_32x4d':
         pretrained_model = timm.create_model('resnext50_32x4d.fb_swsl_ig1b_ft_in1k', pretrained=True)
         model = CustomResNet(pretrained_model, num_classes=100, freeze=False)
-
+    
     elif model_type == 'seresnext50_32x4d':
         pretrained_model = timm.create_model('seresnext50_32x4d.racm_in1k', pretrained=True)
         model = CustomResNet(pretrained_model, num_classes=100, freeze=False)
 
     elif model_type == 'seresnext101_32x8d':
+        #TRY .fb_swsl_ig1b_ft_in1k
         pretrained_model = timm.create_model('seresnextaa101d_32x8d.sw_in12k_ft_in1k_288', pretrained=True)
         model = CustomResNet(pretrained_model, num_classes=100, freeze=False)
-
+    
     elif model_type == 'resnext101_32x4d':
         pretrained_model = timm.create_model('resnext101_32x4d.fb_swsl_ig1b_ft_in1k', pretrained=True)
         model = CustomResNet(pretrained_model, num_classes=100, freeze=False)
-
+    
     elif model_type == 'resnext101_32x8d':
         pretrained_model = timm.create_model('resnext101_32x8d.fb_wsl_ig1b_ft_in1k', pretrained=True)
         model = CustomResNet(pretrained_model, num_classes=100, freeze=False)

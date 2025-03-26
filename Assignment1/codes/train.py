@@ -1,21 +1,19 @@
 from model import get_model
-from utils import get_train_loader, get_val_loader, cutmix_criterion, \
-                    cutmix_data, mixup_criterion, mixup_data
+from utils import get_train_loader, get_val_loader, cutmix_criterion, cutmix_data, mixup_criterion, mixup_data, set_batch
 import torch
 import torch.nn as nn
 import pandas as pd
 import torch.optim as optim
+from torch.optim.lr_scheduler import StepLR, ReduceLROnPlateau, CosineAnnealingLR
 import os
 import numpy as np
 import argparse
-
 
 def get_args():
     parser = argparse.ArgumentParser(description="Training Script Arguments")
 
     parser.add_argument("--model_name", type=str, default="resnet50",
-                        help="Name of the model architecture (e.g., resnet50, \
-                                resnet101, regnet_y_8gf, etc.)")
+                        help="Name of the model architecture (e.g., resnet50, resnet101, regnet_y_8gf, etc.)")
 
     parser.add_argument("--model_type", type=str, default="resnet50",
                         help="Type of the base model (e.g., resnet50, regnet_y_8gf)")
@@ -37,7 +35,6 @@ def get_args():
 
     args = parser.parse_args()
     return args
-
 
 if __name__ == '__main__':
     args = get_args()
@@ -82,7 +79,7 @@ if __name__ == '__main__':
         optimizer, T_0=schedulerT_0, T_mult=schedulerT_mult
     )
     history = []  # 存儲結果
-
+    
     # model.unfreeze_head()
 
     max_val_acc = 0.0
@@ -157,8 +154,9 @@ if __name__ == '__main__':
         # if ep == 30:
         #     model.unfreeze_base_model()
 
-        scheduler.step()
+        scheduler.step()  # **Fixed placement of scheduler step**
 
     # 儲存訓練歷史數據
     df = pd.DataFrame(history, columns=['Epoch', 'Train Loss', 'Train Acc', 'Val Acc', 'LR'])
     df.to_csv(f'./weights/{model_name}_training_log.csv', index=False)
+    

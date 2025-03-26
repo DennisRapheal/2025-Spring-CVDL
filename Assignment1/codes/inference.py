@@ -6,7 +6,6 @@ from model import get_model
 from utils import get_test_loader
 import argparse
 
-
 def get_args():
     parser = argparse.ArgumentParser(description="Training Script Arguments")
 
@@ -20,7 +19,6 @@ def get_args():
 
     return args
 
-
 if __name__ == '__main__':
 
     args = get_args()
@@ -28,6 +26,7 @@ if __name__ == '__main__':
     model_type = args.model_type
     batch_size = args.batch_size
     os.makedirs("./weights", exist_ok=True)
+
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model = get_model(model_type, weights_pth=f'./weights/{model_name}.pth')

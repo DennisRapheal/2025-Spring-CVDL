@@ -4,13 +4,12 @@ from torchvision import datasets, transforms
 from torch.utils.data import DataLoader, Dataset
 from PIL import Image
 import numpy as np
+import cv2
 
 batch_size = 32
 
-
 def set_batch(batch):
     batch_size = batch
-
 
 train_transforms = transforms.Compose([
     transforms.RandomResizedCrop(224, scale=(0.6, 1.2), ratio=(0.75, 1.33)),
@@ -18,12 +17,11 @@ train_transforms = transforms.Compose([
     transforms.RandomVerticalFlip(p=0.5),
     transforms.RandomAffine(degrees=20, translate=(0.1, 0.1), shear=5),
     transforms.ColorJitter(brightness=0.2, contrast=0.2, saturation=0.2, hue=0.1),
-
+    
     transforms.ToTensor(),
     transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
     transforms.RandomErasing(p=0.3, scale=(0.02, 0.15), ratio=(0.3, 3.3), value='random'),
 ])
-
 
 val_transforms = transforms.Compose([
     transforms.Resize((224, 224)),
@@ -31,28 +29,28 @@ val_transforms = transforms.Compose([
     transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
 ])
 
-
 class TestDataset(Dataset):
     def __init__(self, image_dir, transform=None):
         self.image_dir = image_dir
         self.image_list = sorted(os.listdir(image_dir))
         self.transform = transform
-
+        
     def __len__(self):
         return len(self.image_list)
-
+    
     def __getitem__(self, idx):
         img_name = self.image_list[idx]
         img_path = os.path.join(self.image_dir, img_name)
         image = Image.open(img_path).convert("RGB")
-
+        
         if self.transform:
             image = self.transform(image)
-
+        
         return image, img_name
 
 
 train_dataset = datasets.ImageFolder(root='./data/train', transform=train_transforms)
+
 
 sorted_classes = sorted(train_dataset.class_to_idx.keys(), key=int)
 new_class_to_idx = {cls: i for i, cls in enumerate(sorted_classes)}
@@ -80,16 +78,13 @@ def get_train_loader(batch):
     set_batch(batch)
     return train_loader
 
-
 def get_val_loader(batch):
     set_batch(batch)
     return val_loader
 
-
 def get_test_loader(batch):
     set_batch(batch)
     return test_loader
-
 
 # dynamic train data augmentation
 def mixup_data(x, y, alpha=1.0):
@@ -106,11 +101,9 @@ def mixup_data(x, y, alpha=1.0):
     y_a, y_b = y, y[index]
     return mixed_x, y_a, y_b, lam
 
-
 def mixup_criterion(criterion, pred, y_a, y_b, lam):
     '''MixUp Loss 計算'''
     return lam * criterion(pred, y_a) + (1 - lam) * criterion(pred, y_b)
-
 
 def cutmix_data(x, y, alpha=1.0):
     '''CutMix augmentation'''
@@ -132,9 +125,8 @@ def cutmix_data(x, y, alpha=1.0):
     x[:, :, x1:x2, y1:y2] = x[index, :, x1:x2, y1:y2]
     lam = 1 - ((x2 - x1) * (y2 - y1) / (W * H))  # 更新 lambda
     y_a, y_b = y, y[index]
-
+    
     return x, y_a, y_b, lam
-
 
 def cutmix_criterion(criterion, pred, y_a, y_b, lam):
     return lam * criterion(pred, y_a) + (1 - lam) * criterion(pred, y_b)
@@ -167,3 +159,4 @@ if __name__ == "__main__":
         print(f"Sample filenames: {test_filenames[:5]}")  # 列出前5個檔名
     except Exception as e:
         print(f"Error loading test data: {e}")
+
