@@ -5,7 +5,7 @@ import pandas as pd
 import time
 from torch.optim import AdamW
 from torch.optim.lr_scheduler import CosineAnnealingLR
-from utils import get_train_loader, get_val_loader, set_batch
+from utils import get_train_loader, get_easy_train_loader, get_val_loader, set_batch
 from model import get_model
 from torchmetrics.detection.mean_ap import MeanAveragePrecision
 
@@ -17,6 +17,7 @@ def get_args():
     parser.add_argument("--model_name", type=str, default="resnext50_32x4d")
     parser.add_argument("--model_type", type=str, default="resnext50_32x4d")
     parser.add_argument("--from_pretrained", type=str, default="")
+    parser.add_argument("--transform_type", type=str, default="easy")
     parser.add_argument("--num_epochs", type=int, default=50)
     parser.add_argument("--schedulerT_0", type=int, default=200)
     parser.add_argument("--schedulerT_mult", type=int, default=2)
@@ -142,7 +143,11 @@ if __name__ == '__main__':
     set_batch(args.batch_size)
 
     # Load data
-    train_loader = get_train_loader()
+    if args.transform_type == 'easy':
+        train_loader = get_easy_train_loader()
+    else: 
+        train_loader = get_train_loader()
+
     val_loader = get_val_loader()
 
     # Load model

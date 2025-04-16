@@ -1,14 +1,10 @@
 # NYCU Computer Vision 2025 Spring HW2
 
----
-
 StudentID: 111550006
 
 Name: 林庭寪
 
 ## Introduction
-
----
 
 This project tackles digit recognition in natural scene images using the Faster R-CNN framework. The task is divided into two parts:
 
@@ -19,11 +15,11 @@ The model is implemented using PyTorch's Faster R-CNN and trained on a COCO-styl
 
 ## How to Install
 
----
-
 ```bash
 pip install requirements.txt
 ```
+
+* see `train.sh` for training and inferencing
 
 ## Performance Snapshot
 

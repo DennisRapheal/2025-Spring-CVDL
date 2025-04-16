@@ -1,8 +1,7 @@
 import csv
 
-csv_path = './weights/resnext50_32x4d/training_log.csv'
+csv_path = '/home/ccwang/dennis/dennislin0906/cvdl-hw2/weights/resnext50_32x4d_hard_transform_resize256/training_log.csv'
 
-# 欲列印的欄位
 target_columns = [
     "Epoch",
     "Train Loss",
@@ -18,12 +17,11 @@ try:
         reader = csv.DictReader(csvfile)
         data = list(reader)
 
-        # 分別列印每個欄位的所有值
         for col in target_columns:
             print(f"{col}:")
             for row in data:
                 print(row[col])
-            print("-" * 30)  # 分隔線讓輸出更清楚
+            print("-" * 30)
 
 except FileNotFoundError:
     print(f"找不到檔案：{csv_path}")
