@@ -1,4 +1,4 @@
-# --- std / third‑party imports ------------------------------------------------
+# --- std / third-party imports ------------------------------------------------
 import json
 from pathlib import Path
 from typing import List, Tuple
@@ -18,53 +18,55 @@ import skimage.io as sio
 # COCO mask helpers
 # -----------------------------------------------------------------------------
 
+
 def decode_maskobj(mask_obj):
     return mask_utils.decode(mask_obj)
 
 
 def encode_mask(mask_bin):
     rle = mask_utils.encode(np.asfortranarray(mask_bin))
-    rle["counts"] = rle["counts"].decode("utf-8")         # ✅ 與 infer.py 一致
+    rle["counts"] = rle["counts"].decode("utf-8")  # ✅ 與 infer.py 一致
     return rle
 
 
 def read_maskfile(filepath):
     return sio.imread(filepath)
 
+
 # -----------------------------------------------------------------------------
 # Albumentations transform factories
 # -----------------------------------------------------------------------------
 
-'''
-alpha:形變幅度
-sigma:平滑程度
-'''
+# alpha: 形變幅度；sigma: 平滑程度
 def get_train_transform() -> A.Compose:
-    return A.Compose([
-        # A.HorizontalFlip(p=0.3),
-        # A.VerticalFlip(p=0.3),
-        A.ElasticTransform(alpha=30, sigma=12, p=0.3),
-        # A.RandomRotate90(p=0.3),
-        A.Normalize(mean=[0.485, 0.456, 0.406],
-            std=[0.229, 0.224, 0.225]),
-        ToTensorV2(),
-    ],
-    additional_targets={
-        'center_map': 'mask',
-        'boundary_map': 'mask'
-    })
+    return A.Compose(
+        [
+            A.ElasticTransform(alpha=30, sigma=12, p=0.3),
+            A.Normalize(mean=[0.485, 0.456, 0.406],
+                        std=[0.229, 0.224, 0.225]),
+            ToTensorV2(),
+        ],
+        additional_targets={
+            'center_map': 'mask',
+            'boundary_map': 'mask'
+        }
+    )
 
 
 def get_val_transform() -> A.Compose:
-    return A.Compose([
-        A.Normalize(mean=[0.485, 0.456, 0.406],
-            std=[0.229, 0.224, 0.225]),
-        ToTensorV2(),
-    ])
+    return A.Compose(
+        [
+            A.Normalize(mean=[0.485, 0.456, 0.406],
+                        std=[0.229, 0.224, 0.225]),
+            ToTensorV2(),
+        ]
+    )
+
 
 # -----------------------------------------------------------------------------
 # Dataset definitions
 # -----------------------------------------------------------------------------
+
 
 class CellDataset(Dataset):
     """Dataset for training / validation (with ground‑truth)."""
@@ -104,25 +106,18 @@ class CellDataset(Dataset):
                 masks.append(inst_mask)
                 labels.append(cls)
 
-        # === 加載 center / boundary maps ===
         map_folder = Path("./data/train_maps")
         center_map = np.load(map_folder / f"{folder.name}_center_heat_map.npy")[None]
         boundary_map = np.load(map_folder / f"{folder.name}_boundary_map.npy")[None]
-        # _map.shape = (1, H, W)
 
-        # --- 3. 若沒有任何物件，補上空 target（模型不會爆） ---
         if len(masks) == 0:
             masks = torch.zeros((0, H, W), dtype=torch.uint8)
             boxes = torch.zeros((0, 4), dtype=torch.float32)
             labels = torch.zeros((0,), dtype=torch.int64)
-
-            # 對 image 做 basic Tensor 轉換（不使用 Albumentations）
             img = torch.tensor(img).permute(2, 0, 1).float() / 255.0
 
         else:
-            # ✅ 清洗 masks 確保符合 Albumentations 要求
             masks_np = [np.array(m, dtype=np.uint8) for m in masks]
-
             if self.transform is not None:
                 augmented = self.transform(
                     image=img,
@@ -130,10 +125,9 @@ class CellDataset(Dataset):
                     center_map=center_map[0],
                     boundary_map=boundary_map[0]
                 )
-
                 img = augmented["image"]
                 masks = augmented["masks"]
-                center_map   = augmented["center_map"][None]
+                center_map = augmented["center_map"][None]
                 boundary_map = augmented["boundary_map"][None]
             else:
                 img = torch.tensor(img).permute(2, 0, 1).float() / 255.0
@@ -142,8 +136,8 @@ class CellDataset(Dataset):
             labels = torch.as_tensor(labels, dtype=torch.int64)
             masks = torch.as_tensor(np.stack(masks), dtype=torch.uint8)
 
-        center_map   = torch.as_tensor(center_map,   dtype=torch.float32)  # (1, h, w)
-        boundary_map = torch.as_tensor(boundary_map, dtype=torch.float32)  # (1, h, w)
+        center_map = torch.as_tensor(center_map, dtype=torch.float32)
+        boundary_map = torch.as_tensor(boundary_map, dtype=torch.float32)
 
         target = {
             "boxes": boxes,

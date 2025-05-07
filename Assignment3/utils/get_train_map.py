@@ -79,6 +79,6 @@ def process_dataset(root_dir, output_dir):
         np.save(os.path.join(output_dir, f"{image_id}_boundary_map.npy"), boundary)
 
 process_dataset(
-    root_dir='data/train',
-    output_dir='data/train_maps'
+    root_dir='./../data/train',
+    output_dir='./../data/train_maps'
 )

@@ -5,7 +5,7 @@ import skimage.io as sio
 
 all_areas = []
 
-root_dir = Path("data/train")
+root_dir = Path("./../data/train")
 for folder in root_dir.iterdir():
     for cls in range(1, 5):
         path = folder / f"class{cls}.tif"

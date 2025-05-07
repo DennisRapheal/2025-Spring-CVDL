@@ -7,8 +7,9 @@ from torchvision.models.detection import (
     MaskRCNN_ResNet50_FPN_V2_Weights        # v2 權重列舉
 )
 from torchvision.models.detection.faster_rcnn import FastRCNNPredictor
-from torchvision.models.detection.mask_rcnn   import MaskRCNNPredictor
+from torchvision.models.detection.mask_rcnn import MaskRCNNPredictor
 from torchvision.models.detection.rpn import AnchorGenerator
+
 
 class ExtraHead(nn.Module):
     def __init__(self, in_channels: int, out_channels: int, name: str):
@@ -18,19 +19,26 @@ class ExtraHead(nn.Module):
             nn.ReLU(),
             nn.Conv2d(256, out_channels, kernel_size=1)
         )
-        self.name = name  # debug or loss logging
+        self.name = name  # for debug or loss logging
 
     def forward(self, x):
         return self.head(x)
 
 
-def get_model(num_classes: int, model_type: str = "resnet50", with_train_map: bool = False, customed_anchor: bool= False):
+def get_model(
+    num_classes: int,
+    model_type: str = "resnet50",
+    with_train_map: bool = False,
+    customed_anchor: bool = False
+):
     """
     建立 Mask R‑CNN 模型並替換 heads 以符合自訂類別數。
 
     Args:
         num_classes (int): 包含背景的總類別數 (背景 + N 物件)。
         model_type  (str): 'resnet50' 或 'resnet50_v2'。
+        with_train_map (bool): 是否包含 center / boundary head。
+        customed_anchor (bool): 是否使用自訂 anchor 設定。
 
     Returns:
         torchvision.models.detection.MaskRCNN
@@ -48,7 +56,7 @@ def get_model(num_classes: int, model_type: str = "resnet50", with_train_map: bo
         )
 
     # 2. 取出原本 ROI heads 的輸入通道
-    in_features_box  = model.roi_heads.box_predictor.cls_score.in_features
+    in_features_box = model.roi_heads.box_predictor.cls_score.in_features
     in_channels_mask = model.roi_heads.mask_predictor.conv5_mask.in_channels
 
     # 3. 替換 Box predictor (分類 + bbox regression)
@@ -62,13 +70,13 @@ def get_model(num_classes: int, model_type: str = "resnet50", with_train_map: bo
 
     if with_train_map:
         # 假設我們使用的是 mask feature 的輸出通道
-        # 可以替換成其他 feature，如 model.backbone.out_channels
+        # 可替換成其他 feature，例如 model.backbone.out_channels
         model.center_head = ExtraHead(in_channels_mask, 1, name="center")       # binary output
         model.boundary_head = ExtraHead(in_channels_mask, 1, name="boundary")   # binary output
 
     if customed_anchor:
-        anchor_sizes=((16,), (19,), (23,), (29,), (37,))   # ← 可外部指定
-        aspect_ratios=((0.5, 1.0, 2.0),) * 5
+        anchor_sizes = ((16,), (19,), (23,), (29,), (37,))  # 可外部指定
+        aspect_ratios = ((0.5, 1.0, 2.0),) * 5
         model.rpn.anchor_generator = AnchorGenerator(
             sizes=anchor_sizes,
             aspect_ratios=aspect_ratios
