@@ -26,6 +26,6 @@ See `infer.sh` for some script templates for inferencing.
 
 ## Veirfy Format and Visualization
 
-See ./verify for some visual results and 
+See ./verify for some visual results and coco_eval
 
 ## Performance Snapshot
