@@ -1,0 +1,4 @@
+tmux new-session -d -s mysession 'bash run.sh'
+tmux capture-pane -t mysession -p
+tmux kill-session -t mysession
+tmux attach -t mysession
