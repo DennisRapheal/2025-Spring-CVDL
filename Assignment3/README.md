@@ -29,3 +29,5 @@ See `infer.sh` for some script templates for inferencing.
 See ./verify for some visual results and coco_eval
 
 ## Performance Snapshot
+
+![Leader Board Screenshot](LB_screenshot.png)
