@@ -1,0 +1,4 @@
+lr: 0.0002
+warmup_epochs: 15
+max_epochs: 150
+weight_decay: 0.0001
