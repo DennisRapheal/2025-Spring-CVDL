@@ -17,3 +17,4 @@ pip install requirements.txt
 * see `train.sh` for training and inferencing
 
 ## Performance Snapshot
+![Leader Board Screenshot](leaderboard.png)
